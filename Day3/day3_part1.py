@@ -1,39 +1,46 @@
 # day3_part1.py
 
-def calculate_gamma_rate(f):
+from collections import Counter
 
-    # f = open("input.txt", "r")
+def parse(r):
+    d = {}
+    for i, c in enumerate(r):
+        d[i] = int(c)
+    return Counter(d)
 
-    # for command in f:
-    #     parts = command.split(' ', 1)
-    #     verb = parts[0]
-    #     distance = int(parts[1])
+def count_bits(file):
+    lines = 0
 
-    #     if (verb == 'forward'):
-    #         horizontal = horizontal + distance
-    #         depth = depth + (aim * distance)
-    #     if (verb == 'down'):
-    #         aim = aim + distance
-    #     if (verb == 'up'):
-    #         aim = aim - distance
+    bit_counts = Counter()
 
-    #     print(verb, distance, horizontal, depth, horizontal * depth)
+    f = open(file, "r")
+    for reading in f:
+        lines = lines + 1
+        reading_counter = parse(reading.strip())
+        bit_counts = bit_counts + reading_counter
 
-    # f.close()
+    f.close()
+    return bit_counts
 
-    return 2;
+def calculate_rates(file):
+    bit_counts = count_bits(file)
 
-def calculate_epsilon_rate(f):
-    return 1;
+    print(sorted(bit_counts.items()))
+    return 1,2
 
 
-def calculate_power_consumption(f):
-    gamma_rate = calculate_gamma_rate(f)
-    epsilon_rate = calculate_epsilon_rate(f)
+def calculate_power_consumption(file):
+    (gamma_rate, epsilon_rate) = calculate_rates(file)
     return gamma_rate * epsilon_rate
 
-def main(f):
-    power_consumption = calculate_power_consumption(f)
+
+def main(file):
+    power_consumption = calculate_power_consumption(file)
     print(power_consumption)
 
+
+def test():
+    print(parse('101010'))
+
+# test()
 main('test.txt')
