@@ -5,13 +5,41 @@ from collections import Counter
 instructions = []
 
 def parse_instruction(i):
-    return ('', '')
+    parts = i.split(' ')
+    t = parts[2].split('=')
+    return t[0], int(t[1])
 
 def fold(dots, i):
+
     # fold the paper up (for horizontal y=... lines) 
     # or left (for vertical x=... lines
-    (direction, index) = parse_instruction(i)
-    return dots
+    
+    t = []
+    (d, loc) = parse_instruction(i)
+
+    print(f'INFO: instruction: {i}')
+    print(f'INFO: d = {d}')
+    print(f'INFO: loc = {loc}')
+    print('')
+
+
+    if d == 'x':
+        # fold vertically
+        for y in dots:
+            t.append(y[0:loc])        
+        for r in range(len(t)):
+            for i in range(loc):
+                t[r][i] = t[r][i] + dots[r][len(dots[r])-1-i]
+
+
+    elif d == 'y':
+        # fold horizontally
+        t = dots[0:loc]
+        for i in range(loc):
+            for c in range(len(t[0])):
+                t[i][c] = t[i][c] + dots[len(dots)-1-i][c]
+
+    return t
 
 def parse_input_file(file): 
     global instructions
@@ -33,11 +61,16 @@ def parse_input_file(file):
     f.close()
     xmax = xmax + 1
     ymax = ymax + 1
-    for y in range(ymax):
-        dots.append([0] * xmax)
+    dots = make_grid(ymax, xmax)
     for (x, y) in temp:
         dots[y][x] = 1
     return dots
+
+def make_grid(r, c):
+    g = []
+    for y in range(r):
+        g.append([0] * (c))
+    return g
 
 def print_dots(dots):
     print(f'INFO: Dots:')
@@ -53,8 +86,10 @@ def visible(dots):
     total = 0
     for r in dots:
         for c in r:
-            total = total + c
+            if c:
+                total = total + 1
     return total
+
 def main(file):
 
     global instructions
@@ -64,11 +99,12 @@ def main(file):
     print_dots(dots)
 
     # Fold according to instructions
-    for i in instructions:
+    while instructions:
+        i = instructions.pop(0)
         dots = fold(dots, i)
         print_dots(dots)
 
     # Cleanup
     print("Done!")
 
-main('test.txt')
+main('input.txt')
