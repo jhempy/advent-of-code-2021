@@ -6,6 +6,8 @@ pairs = Counter()
 first = ''
 last = ''
 rules = {}
+trailing = ''
+beginning = ''
 
 def increase():
 
@@ -51,7 +53,7 @@ def insert():
     pairs = t
 
 def parse_input_file(file): 
-    global pairs, rules, first, last
+    global pairs, rules, first, last, trailing, beginning
     f = open(file, "r")
     for (i, line) in enumerate(f):
         line = line.rstrip('\n')
@@ -64,6 +66,8 @@ def parse_input_file(file):
                 pairs[t] = pairs[t] + 1
             first = line[:2]
             last = line[-2:]
+            trailing = line[-1:]
+            beginning = line[1]
 
 def main(file):
 
@@ -79,7 +83,7 @@ def main(file):
     print('')
 
     # Calculate insertions
-    steps = 10
+    steps = 40
     for x in range(steps):
         print(f'------------------------------')
         print(f'Interation: {x + 1}')
@@ -99,20 +103,30 @@ def main(file):
         print(f'front is {front}')
         print(f'back is {back}')
 
+        # if t == front:
+        #     final[front] = final[front] + amount
+        # else:
+        #     final[front] = final[front] - amount
+
         final[front] = final[front] + amount
-        if t == last:
+        if t == back:
             final[back] = final[back] + amount
-        else:
-            final[back] = final[back] - amount
+
 
         print(final)
 
-    # print(f'Final is {final}')
+    final[beginning] = final[beginning] + 1
+    final[trailing] = final[trailing] + 1
+
+    print(f'Final is {final}')
 
     print(f'First is {first}')
     print(f'Last is  {last}')
 
+    print(f'Beginning is {beginning}')
+    print(f'Trailing is {trailing}')
+
     # Cleanup
     print("Done!")
 
-main('test.txt')
+main('input.txt')
