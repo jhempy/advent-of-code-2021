@@ -115,6 +115,7 @@ def main(file):
 
         print(final)
 
+    # Need to figure out why these are off by one
     final[beginning] = final[beginning] + 1
     final[trailing] = final[trailing] + 1
 
