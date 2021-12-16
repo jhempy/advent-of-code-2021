@@ -52,7 +52,23 @@ def parse_input_file(file):
 
 def embiggen():
     global roof
+    biggen = roof.copy()
+    temp = roof.copy()
+    for i in range(4):
+        print(f'increasing columns {i}')
+        for j in range(len(temp)):
+            temp[j] = list(map(advance, temp[j]))
+            biggen[j].extend(temp[j])
+    temp = biggen.copy()
+    for i in range(4):
+        print(f'increasing rows {i}')
+        for j in range(len(temp)):
+            temp[j] = list(map(advance, temp[j]))
+            biggen.append(temp[j])
+    print(biggen)
+    roof = biggen
     return
+
 
 def advance(x):
     if x + 1 == 10:
@@ -95,8 +111,7 @@ def main(file):
     start = dest(0, 0)
     dests.append(start)
 
-    # delta = 100
-    delta = 0
+    delta = 100
     last = 100
     loops = 0
 
@@ -175,11 +190,12 @@ def main(file):
 
     # Cleanup
     print_roof()
+    print(f'roof rows = {len(roof)}, roof cols = {len(roof[0])} ')
     print("Done!")
 
 # main('tiniest.txt')
 # main('tinier.txt')
 # main('tiny.txt')
-main('test.txt')
-# main('input.txt')
+# main('test.txt')
+main('input.txt')
 # main('testx5.txt')
