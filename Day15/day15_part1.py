@@ -2,81 +2,30 @@
 
 from collections import Counter
 
-start = [0,0]
 roof = []
-end = []
-paths = []
-discarded = []
-plums = []
-risks = []
-lowest = 0
+dests = []
 
-def risk(p):
-    global roof
-    r = 0
-    for x in p[1:]: # we don't count start in the risk
-        r = r + roof[x[0]][x[1]]
-    return r
+class dest:
+    def __init__(self, r, c):
+        self.row = r
+        self.col = c
+        self.risk_of = roof[self.row][self.col]
+        self.risk_to = 0
+    def __str__(self):
+        s = '[' + str(self.row) + ',' + str(self.col) + '], risk_of=' + str(self.risk_of) + ', risk_to=' + str(self.risk_to)
+        return s
+    def __eq__(self, other):
+        return self.row == other.row and self.col == other.col  
+    def __key__(self):
+        return self.row, self.col      
 
-def calculate_risks():
-    global plums, risks
-    for p in plums:
-        risks.append(risk(p))
-    return
-
-def calculate_paths():
-    print(f'Calculating paths...')
-
-    global paths, roof, start, end
-
-    # Seed paths with the only valid starting combinations
-    start_paths()
-    print_paths()
-
-    while paths:
-        new = []
-        for p in paths:
-            ns = find_next(p, 4)
-            for n in ns:
-                t = p.copy()
-                t.append(n)
-                new.append(t)
-        paths = prune_paths(new)
-        print_counts()
-
-    print(f'Recursion done! Yay!')
-    print(f'--------------------')
-    print(f'')
-    return
-
-def prune_paths(new):
-    global roof, plums, end, lowest
-    r = []
-    ended_not_lower = 0
-    higher_risk = 0
-    print(f'INFO (prune) > new paths to consider = {len(new)}')
-    for n in new:
-        t = risk(n)
-        if t > lowest:
-            higher_risk = higher_risk + 1
-        elif n[-1] == end:
-            if t <= lowest:
-                lowest = t
-                # print(f'INFO (prune) > new lowest risk = {lowest}')
-                plums.append(n)
-            else: 
-                ended_not_lower = ended_not_lower + 1
-        else:
-            r.append(n)
-    print(f'INFO (prune) > ended but not lower = {ended_not_lower}, higher risk = {higher_risk}')
-    print(f'INFO (prune) > remaining new paths = {len(r)}')
-    return r
-
-def find_next(prev, at_most):
+def neighbors(d):
+    global roof, dests
+    r = d.row
+    c = d.col
     global roof
     t = []
     n = []
-    (r, c) = prev[-1]
     # t.append([r-1, c-1])     # add neighbor to the nw
     t.append([r-1, c])       # add neighbor to the north
     # t.append([r-1, c+1])     # add neighbor to the ne
@@ -86,39 +35,9 @@ def find_next(prev, at_most):
     t.append([r+1, c])       # add neighbor to the south
     # t.append([r+1, c-1])     # add neighbor to the sw
     for (tr, tc) in t:
-        # only add neighbors we haven't visited yet
-        if tr in range(len(roof)) and tc in range(len(roof[0])) and [tr, tc] not in prev: 
-            n.append([tr, tc])
-    # sort n by risk
-    s = sorted(n, key=lambda n: roof[n[0]][n[1]])
-    # print(f'sorted = {s}')
-
-    # return at_most n
-    m = n[:at_most]
-    # print(f'at most = {m}')
-    return m
-
-def add_red_herring():
-    global roof, paths, lowest
-    rh = []
-    # add first column
-    for r in range(len(roof)-1):
-        rh.append([r, 0])
-    # add final row
-    for c in range(len(roof[r])):
-        rh.append([len(roof)-1, c])
-
-    print(f'Red herring is {rh}')
-    lowest = risk(rh)
-    plums.append(rh)
-    return
-
-def start_paths():
-    global roof, paths, start
-    neighbors = [[0,1], [1,0]]
-    for n in neighbors:
-        paths.append([start, n])
-    return
+        if tr in range(len(roof)) and tc in range(len(roof[0])):
+            n.append(dest(tr, tc))
+    return n
 
 def parse_input_file(file): 
     global roof, end, lowest
@@ -128,64 +47,121 @@ def parse_input_file(file):
         roof.append(list(map(int, list(l))))
         end = [i, len(l)-1]
     f.close()
-    add_red_herring()
-    print_plums()
     return
 
 def print_roof():
-    global roof, start, end
+    global roof
     print(f'--------------------')
-    print(f'INFO > Start: {start} -> {roof[start[0]][start[1]]}')
-    print(f'INFO > End: {end} -> {roof[end[0]][end[1]]}')
     print(f'INFO > Roof:')
-    # print(f'{roof}')
     for r in roof:
         print(''.join(list(map(str, r))))
     print(f'--------------------')
     print(f'')
     return
 
-def print_paths():
-    global paths
-    print(f'INFO > Paths:')
-    for p in paths:
-        print(p)
+def print_dests():
+    global dests
     print(f'--------------------')
-    print(f'')
+    print(f'INFO > Destinations:')
+    print_list_of_dests(dests)
+    print(f'--------------------')
     return
 
-def print_plums():
-    global plums
-    print(f'INFO > Plums:')
-    for p in plums:
-        print(p)
-    print(f'--------------------')
-    print(f'')
+def print_list_of_dests(ds):
+    for d in ds:
+        print(d)
     return
-
-def print_counts():
-    print(f'INFO > len(paths) is {len(paths)}')    
-    print(f'INFO > len(plums) is {len(plums)}')    
-    print(f'--------------------')
-
+    
 def main(file):
 
-    global paths, risks
+    global roof, dests
 
     # Import input data
     parse_input_file(file)
     print_roof()
 
-    # Calculate paths
-    calculate_paths()
+    # First iteration
+    start = dest(0, 0)
+    dests.append(start)
 
-    # Calculate risks
-    calculate_risks()
+    delta = 100
+    last = 100
+    loops = 0
+
+    while delta != 0:
+
+        loops = loops + 1
+
+        # Loop
+        for i in range( len(roof) + len(roof[0]) - 1):
+        # for i in range(3):
+
+            print(f'loops = {loops}, i = {i}, delta = {delta}')
+
+            # Find all points on roof where r + c = i
+            current = []
+            for r in range(i+1):
+                try:
+                    current.append(dest(r, i-r))
+                except:
+                    pass
+
+            # print_list_of_dests(current)
+
+            for c in current:
+
+                useme = c
+
+                oldc = next((x for x in dests if x.row == useme.row and x.col == useme.col), None)
+                if oldc:
+                    useme = oldc
+                    # print(f'  We have already seen this CURRENT: {useme}')
+                else:
+                    # print(f'  This is a new CURRENT: {useme}')
+                    pass
+
+                for n in neighbors(useme):
+
+                    # Have we seen this neighbor before?
+                    existing = next((x for x in dests if x.row == n.row and x.col == n.col), None)
+                    if existing:
+                        # print(f'  We have already seen {existing}')
+                        if n == start:
+                            # print(f'  Can\'t go back to start')
+                            pass
+                        else:
+                            weight = useme.risk_to + existing.risk_of
+                            # print(f'  c.risk_to = {useme.risk_to}')
+                            # print(f'  x.risk_of = {existing.risk_of}')
+                            # print(f'  weight    = {weight}')
+                            if existing.risk_to < weight:
+                                # print('  -- been here before, and less riskily')
+                                pass
+                            elif existing.risk_to == weight:
+                                # print('  -- been here before, same risk')
+                                pass
+                            elif existing.risk_to > weight:
+                                # print('  -- been here before, but more riskily -- updating')
+                                existing.risk_to = weight
+
+                    else:
+                        weight = useme.risk_to + n.risk_of
+                        n.risk_to = weight
+                        # print(f'  New destination {n}, weight={weight}')
+                        dests.append(n)
+
+        end = next((x for x in dests if x.row == useme.row and x.col == useme.col), None)
+        delta = last - end.risk_to
+        print(f'Delta is {delta}')
+        last = end.risk_to
+
+
+    # What happened?
+    print_dests()
+    print(f'Delta is {delta} after {loops} loops')
+
 
     # Cleanup
-    print(f'Number of paths: {len(paths)}')
-    print(f'Risks: {risks}')
-    print(f'Smallest risk: {min(risks)}')
     print("Done!")
 
 # main('tiniest.txt')
