@@ -13,49 +13,66 @@ def parse_packet(pkt):
     if (typeid == 4):
         # Message is a literal
         decoded = parse_literal(contents)
-        # print(f'Literal decodes to: {decoded}')        
     else:
         # Message is an operator
         parse_operator(contents)
     return
 
-def parse_literal(packet):
+def parse_literal(msg):
     print(f'  Parsing literal packet...')
     decoded = ''
     flag = 1
     while flag > 0:
-        flag = int(packet[0:1])
-        decoded = decoded + packet[1:5]
-        packet = packet[5:]
-    return int(decoded, 2)
+        flag = int(msg[0:1])
+        decoded = decoded + msg[1:5]
+        msg = msg[5:]
+    print(f'    {int(decoded, 2)}')
+    if len(msg) > 10:
+        packet_queue.append(msg)
 
 def parse_operator(msg):
     print(f'  Parsing operator packet...')
-    ltid = msg[0:1]
+    ltid = msg[:1]
+    msg = msg[1:]
     if ltid == '0':
         # 15 bits
-        operator_sub15(msg[1:])
+        operator_sub15(msg)
     if ltid == '1':
         # 11 bits
-        operator_sub11(msg[1:])
+        operator_sub11(msg)
 
 def operator_sub15(msg):
-    print(f'    Parsing operator packet (length 15 type)...')
-    sl = int(msg[1:16], 2)
-    packet_queue.append(msg[:sl]) # break out this subpacket
-    if msg: 
-        packet_queue.append(msg[sl:]) # remainer is more packets
-
+    sl = int(msg[:15], 2)
+    print(f'    Parsing operator packet with a subpacket of length {sl}...')
+    if sl == 0:
+        print(f'LENGTH 0!')
+        print(f'{msg}')
+        print(f'{msg[15:]}')
+    msg = msg[15:]
+    packet_queue.append(msg[:sl])
+    msg = msg[sl:]
+    if len(msg) > 10:
+        packet_queue.append(msg)
 
 def operator_sub11(msg):
-    nos = int(msg[1:12], 2)
-    print(f'    Parsing operator packet (length 11 type)...')
-    for i in range(nos):
-        print(f'      {i} packet')
-        packet_queue.append(msg[:11]) # append a packet
-        msg = msg[11:]
-    if msg:
-        packet_queue.append(msg) # remainder might be more packets
+    nos = int(msg[:11], 2)
+    msg = msg[11:]
+    print(f'    Parsing operator packet with {nos} subpackets...')
+    # for i in range(nos-1):
+    #     print(f'      subpacket {i+1}')
+    #     packet_queue.append(msg[:11])
+    #     msg = msg[11:] 
+    packet_queue.append(msg)
+
+# def operator_sub11(msg):
+#     nos = int(msg[:11], 2)
+#     msg = msg[11:]
+#     print(f'    Parsing operator packet with {nos} subpackets...')
+#     for i in range(nos-1):
+#         print(f'      subpacket {i+1}')
+#         packet_queue.append(msg[:11])
+#         msg = msg[11:] 
+#     packet_queue.append(msg)
 
 def header(b):
     ver = int(b[0:3], 2)
@@ -101,12 +118,18 @@ def main(file):
 
     # Prep data
     raw = parse_input_file(file)
-    all = binary_from_hex(raw)
-    packet_queue.append(all)
+    bstr = binary_from_hex(raw)
+    print(f'Raw is {raw}')
+    print(f'Bstr is {bstr}')
+    packet_queue.append(bstr)
 
     # Data contains nested packets
     # Parse recursively
     while len(packet_queue) > 0:
+        print(f'---------------------------------------------------')
+        print(f'Processing queue ({len(packet_queue)} packets)')
+        print(f'{packet_queue}')
+        print(f'Versions = {versions}')
         pkt = packet_queue.pop(0)
         parse_packet(pkt)
 
@@ -116,8 +139,11 @@ def main(file):
     print('Done!')
 
 
-# main('literal_2021.txt')
-main('operator_sum16.txt')
+# main('literal_2021.txt') 
+# main('operator_3packets.txt')
+# main('operator_sum16.txt')
+# main('operator_sum31.txt')
+# main('literal_10_20.txt')
 # main('operator_sum12.txt')
 # main('operator_sum23.txt')
-# main('operator_sum31.txt')
+main('input.txt')
