@@ -1,4 +1,4 @@
-# Day 18: Snailfish (part 2)
+# Day 18: Snailfish (part 1)
 
 import re
 import math
@@ -14,10 +14,8 @@ def explode(sfnum):
 
     txt = f'{sfnum}'
     result = txt
-    pattern = "(\[\d+, \d+\])"
+    pattern = "(\[\d, \d\])"
     matches = re.finditer(pattern, txt)
-    deep_matches = 0
-
     for m in matches:
         l = int(eval(m.group())[0])
         r = int(eval(m.group())[1])
@@ -26,17 +24,15 @@ def explode(sfnum):
         c = Counter(txt[:m.span()[0]])
         depth = c['['] - c[']']
         # print(f'depth is {depth}')
-        if deep_matches == 0 and depth > 3:
-
-            deep_matches = deep_matches + 1
+        if depth > 3:
 
             # Is there a digit immediately left of the match?
-            n = re.finditer("\d+", left)
+            n = re.finditer("\d", left)
             x = None
             for x in n:
                 pass    
             if x is not None:
-                # x is now the rightmost left match
+                # x is now the rightmost match
                 new = str(int(left[x.span()[0]:x.span()[1]]) + l)
                 left = left[:x.span()[0]] + new + left[x.span()[1]:]
             else:
@@ -44,10 +40,9 @@ def explode(sfnum):
                 pass
 
             # Is there a digit immediately right of the match?
-            x = re.search("\d+", right)
+            x = re.search("\d", right)
             if x:
-                temp = int(right[x.span()[0]:x.span()[1]])
-                new = str(temp + r)
+                new = str(int(right[x.span()[0]:x.span()[1]]) + r)
                 right = right[:x.span()[0]] + new + right[x.span()[1]:]
             else:
                 # right = '0' + right
@@ -82,45 +77,52 @@ def split(sfnum):
     return txt
 
 def reduce(sfnum):
-    # print(f'------------------------')
-    # print(f'after addition:  {sfnum}')
+    print(f'------------------------')
+    print(f'after addition:  {sfnum}')
 
     ecount = 1
     keep_exploding = True
     scount = 1
+    keep_splitting = True
     working = str(sfnum)
 
     while (ecount or scount):
         ecount = 0
         scount = 0
-        keep_exploding = True
-
+        
         # Explode as much as possible
         while keep_exploding:
             last = working
-            working = explode(working)
+            working = explode(last)
+            print(f'after explode:   {working}')
             if last != working:
                 # explode did something
-                # print(f'after explode:   {working}')
                 ecount = ecount + 1
             else:
                 keep_exploding = False
 
-        # Split at most once
-        last = working
-        working = split(working)
-        if last != working:
-            # split did something
-            # print(f'after split:     {working}')
-            scount = scount + 1
+        # Split as much as possible
+        while keep_splitting:
+            last = working
+            working = split(last)
+            print(f'after split:     {working}')
+            if last != working:
+                # split did something
+                scount = scount + 1
+            else:
+                keep_splitting = False
 
-    # print(f'reduction:       {working}')
-    # print(f'------------------------')
+        keep_exploding = True
+        keep_splitting = True
+
+        print(f'ecount is {ecount}, scount is {scount}')
+
+    print(f'reduction:       {working}')
+    print(f'------------------------')
     return working
 
 def magnitude(sfnum):
     e = ''
-    next_digit_close_parens = False
     for i, c in enumerate(sfnum):
         if c == '[':
             e = e + '('
@@ -128,20 +130,13 @@ def magnitude(sfnum):
             e = e + ')'
         if c in list(map(str, range(10))):
             e = e + c
-            if next_digit_close_parens:
-                e = e + ')'
-                next_digit_close_parens = False
         if c == ' ':
             pass
         if c == ',':
             if sfnum[i-1:i+1] == '],':
-                e = e + '*3+2*'
-            elif sfnum[i:i+3] == ', [':
                 e = e + '+'
-            else:
-                e = e[:-1] + '(' + e[-1] + '*3)+(2*'
-                next_digit_close_parens = True
-
+            else:    
+                e = e + '*3*2*'
     return eval(e)
 
 def parse_input_file(file): 
@@ -159,33 +154,30 @@ def main(file):
     numbers = parse_input_file(file)
     print(numbers)
 
-    magnitudes = []
+    # r = split(numbers[0])
+    # r = explode(numbers[0])
+    # r = reduce(numbers[0])
+    # print(r)
 
-    # # Perform addition
-    # while len(numbers) > 1:
-    #     first = eval(numbers.pop(0))
-    #     second = eval(numbers.pop(0))
-    #     numbers.insert(0, str(reduce([first, second])))
+    # Perform addition
+    while len(numbers) > 1:
+        first = eval(numbers.pop(0))
+        second = eval(numbers.pop(0))
+        numbers.insert(0, str(reduce([first, second])))
 
-    for i, s in enumerate(numbers):
-        for j, f in enumerate(numbers):
-
-            if i != j:
-
-                mag = magnitude(str(reduce([eval(s), eval(f)])))
-                print(f'Magnitude of {i} + {j} = {mag}')
-
-                magnitudes.append(mag)
 
     # Cleanup
     print('')
     print('')
-    print(magnitudes)
+    print(numbers)
     print('')
-    print(f'{max(magnitudes)}')
+    print(f'Magnitude is {magnitude(numbers[0])}')
     print('')
     print('Done!')
 
 
-# main('test.txt')
-main('input.txt')
+# main('explode.txt')
+# main('split.txt')
+# main('tiny.txt')
+main('test.txt')
+# main('input.txt')
