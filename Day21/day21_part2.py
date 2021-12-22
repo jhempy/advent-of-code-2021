@@ -8,21 +8,31 @@ wins = {}
 wins[1] = []
 wins[2] = []
 
+face = 0
+roll_counter = 0
+
+def count_universes(games):
+    ucount = 0
+    for g in games:
+        ucount = ucount + g.universes
+    return ucount
+
 def dedupe(games):
+    print(f'Deduping new games...')
     uniques = []
+    # print(f'  Started with {len(games)} new games ({count_universes(games)} universes)')
     for g in games:
         if g in uniques:
             for u in uniques:
                 if g == u:
                     u.universes = u.universes + g.universes
-                    # print(f'Adding {g.id} to {u.id}')
-                    # print(g)
-                    # print(u)
         else:
             uniques.append(g)
+    # print(f'  Ended with {len(uniques)} new games ({count_universes(uniques)} universes)')
     return uniques
 
 def generate_combos():
+    # Dirac quantum die
     c = []
     for i in range(1, 4):
         for j in range(1, 4):
@@ -62,8 +72,8 @@ class game:
             self.player = 1
 
     def copy(self, u):
-        n = game(self.start[1], self.start[2], 0)
-        n.universes = self.universes + u
+        n = game(self.start[1], self.start[2], 1)
+        n.universes = self.universes * u
         n.roll_counter = self.roll_counter
         n.player = self.player
         n.current[1] = self.current[1]
@@ -76,28 +86,36 @@ def main():
     
     global ongoing, wins
 
-    ongoing.append(game(4, 8, 0))
-    
+    ongoing.append(game(4, 8, 1))
+    loops = 0
+
     while ongoing:
 
-        print(f'Starting a new outer loop: {len(ongoing)} ongoing games')
+        loops = loops + 1
+        print(f'Starting a new outer loop ({loops}): {len(ongoing)} ongoing games')
+        wins1 = count_universes(wins[1])
+        wins2 = count_universes(wins[2])
+        remaining = count_universes(ongoing)
+        print(f'Games won by player 1: {wins1} should be 444356092776315')
+        print(f'Games won by player 2: {wins2} should be 341960390180808')
+        print(f'Ongoing games to consider: {remaining}')
+
         temp = []
 
         for g in ongoing:
 
-            print(f'Starting game: {g}')
             combos = generate_combos()
-            # print(combos)
             for c in combos.items():
 
                 n = g.copy(c[1])
-                # print(f'  Created game ID {n.id} with {n.universes} universes')
 
-                # print(f'    Spaces is {c[0]}')
+                # Calculate current space
                 n.current[n.player] = (n.current[n.player] + c[0]) % 10
                 if n.current[n.player] == 0:
                     n.current[n.player] = 10;
                 # print(f'    Current is {n.current[n.player]}')
+                
+                # Increase player's total
                 n.total[n.player] = n.total[n.player] + n.current[n.player]
                 # print(f'    Total is {n.total[n.player]}')
 
@@ -109,14 +127,11 @@ def main():
 
         ongoing = dedupe(temp)
 
+    print(f'')
     print(f'Ongoing games: {len(ongoing)}')
-    wins1 = 0
-    for w in wins[1]:
-        wins1 = wins1 + w.universes
-    wins2 = 0
-    for w in wins[2]:
-        wins2 = wins2 + w.universes
-    print(f'Games won by player 1: {wins1} should be 444356092776315')
+    wins1 = count_universes(wins[1])
+    wins2 = count_universes(wins[2])
+    print(f'Games won by player 1: {len(wins[1])} {wins1} should be 444356092776315')
     print(f'Games won by player 2: {wins2} should be 341960390180808')
 
     print(f'Done!')
