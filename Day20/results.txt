@@ -1,0 +1,5 @@
+7552 is too high
+5480 is too high
+5051 is too low
+5362 not right
+try 5361 next - correct!
