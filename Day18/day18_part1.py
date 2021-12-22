@@ -190,4 +190,5 @@ def main(file):
 # main('split.txt')
 # main('tiny.txt')
 # main('test.txt')
-main('input.txt')
+# main('input.txt')
+main('dave1.txt')
